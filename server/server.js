@@ -10,9 +10,10 @@ const app = express()
 connectDB()
 app.use(cors())
 app.use(express.json())
-app.use(clerkMiddleware())
+
 const port = process.env.PORT || 4000
 
+app.use(clerkMiddleware())
 app.use("/api/clerk", clerkWebhooks)
 
 app.get("/", (req, res) => {
