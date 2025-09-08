@@ -16,7 +16,7 @@ const port = process.env.PORT || 4000
 app.use("/api/clerk", clerkWebhooks)
 
 app.get("/", (req, res) => {
-    res.send("hii this parvej");
+    res.send("my name is parry is here.");
 
 })
 
