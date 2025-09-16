@@ -3,15 +3,74 @@ import { useAppContext } from '../context/AppContext'
 import { useParams } from 'react-router-dom'
 import PropertyImages from './PropertyImages'
 import { assets } from '../assets/data'
+import toast from 'react-hot-toast'
 
 const PropertyDetails = () => {
-    const { properties,currency } = useAppContext()
+    const { properties, currency, navigate, getToken, axios } = useAppContext()
     const [property, setProperty] = useState(null)
     const { id } = useParams()
+    const [checkInDate, setCheckInDate] = useState(null)
+    const [checkOutDate, setCheckOutDate] = useState(null)
+    const [guests, setGuests] = useState(1)
+    const [isAvailable, setIsAvailable] = useState(false)
+
+    const checkAvailability = async () => {
+        try {
+            if(checkInDate > checkOutDate){
+                toast.error("checkInDate should be less than checkOutDate")
+            }
+            const {data}=await axios.post("/api/bookings/check-availability",{property:id,checkInDate,checkOutDate})
+            if(data.success){
+                if(data.isAvailable){
+                    setIsAvailable(true)
+                    toast.success("Property is Availble")
+                }else{
+                    setIsAvailable(false)
+                    toast.error("Property is not Availble")
+                }
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error);
+        }
+    }
+    const onSubmitHandler = async(e)=>{
+        try {
+            e.preventDefault()
+            if(!isAvailable){
+                return checkAvailability()
+            }else{
+                const {data}=await axios.post("/api/bookings/book",{
+                    property: id,
+                    checkInDate,
+                    checkOutDate,
+                    guests,
+                    paymentMethod:"Pay at Check-in"
+                },{
+                    headers:{Authorization:`Bearer ${await getToken()}`},
+                });
+                if(data.success){
+                    toast.success(data.message)
+                    navigate('/my-bookings')
+                    scrollTo(0,0)
+                }else{
+                    toast.error(data.message)
+                }
+            }
+        } catch (error) {
+            toast.error(error.message)
+            
+        }
+    }
+
+
+
+
     useEffect(() => {
         const property = properties.find((property) => property._id === id)
         property && setProperty(property)
-    }, [properties])
+    }, [properties,id])
     return (
         property && (
             <div className="bg-gradient-to-r from-[#fffbee] to-white py-16 pt-28">
@@ -74,31 +133,32 @@ const PropertyDetails = () => {
                                 ))}
                             </div>
                             {/* form | check availibilty */}
-                            <form action="" className=' text-gray-500 bg-secondary/10 rounded-lg px-6 py-4 flex flex-col lg:flex-row gap-4  max-w-md lg:max-w-full ring-1 ring-slate-900/10 relative mt-10'>
+                            <form onSubmit={onSubmitHandler} action="" className=' text-gray-500 bg-secondary/10 rounded-lg px-6 py-4 flex flex-col lg:flex-row gap-4  max-w-md lg:max-w-full ring-1 ring-slate-900/10 relative mt-10'>
                                 <div className="flex flex-col w-full">
                                     <div className="flex items-center gap-2">
                                         <img src={assets.calendar} alt="" width={20} />
                                         <label htmlFor="checkInDate">Check in</label>
                                     </div>
-                                    <input type="date" id='checkInDate' className='rounded bg-secondary/10 border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' />
+                                    <input onChange={(e)=>setCheckInDate(e.target.value)} min={new Date().toISOString().split("T")[0]}  type="date" id='checkInDate' className='rounded bg-secondary/10 border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' />
                                 </div>
                                 <div className="flex flex-col w-full">
                                     <div className="flex items-center gap-2">
                                         <img src={assets.calendar} alt="" width={20} />
                                         <label htmlFor="checkOutDate">Check out</label>
                                     </div>
-                                    <input type="date" id='checkOutDate' className='rounded bg-secondary/10 border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' />
+                                    <input onChange={(e)=>setCheckOutDate(e.target.value)}
+                                    min={checkInDate}  type="date" id='checkOutDate' disabled={!checkInDate} className='rounded bg-secondary/10 border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' />
                                 </div>
                                 <div className="flex flex-col w-full">
                                     <div className="flex items-center gap-2">
                                         <img src={assets.user} alt="" width={20} />
                                         <label htmlFor="guests">Guests</label>
                                     </div>
-                                    <input min={1} max={4} type="number" id='guests' className='rounded bg-secondary/10 border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' placeholder='0' />
+                                    <input onChange={(e)=>setGuests(e.target.value)} value={guests} min={1} max={4} type="number" id='guests' className='rounded bg-secondary/10 border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' placeholder='0' />
                                 </div>
                                 <button type='submit' className='flexCenter gap-1 rounded-md btn-dark min-w-44'>
                                     <img src={assets.search} width={20} className='invert' alt="" />
-                                    <span>Search</span>
+                                    <span>{isAvailable ? "Book Property":"Check Dates"}</span>
                                 </button>
                             </form>
                         </div>
@@ -107,46 +167,46 @@ const PropertyDetails = () => {
                             <div className="p-6 rounded-xl border border-slate-900/10">
                                 <h4 className="h4 mb-3">Contact Agent</h4>
                                 <form action="" className='flex flex-col gap-4'>
-                                    <input type="text" placeholder='Your Name' className='p-2 py-1 border border-gray-300 rounded-md text-sm' required/>
-                                    <input type="Email" placeholder='Your Email' className='p-2 py-1 border border-gray-300 rounded-md text-sm' required/>
-                                    <textarea rows={4} placeholder='Your Message' className='p-2 py-1 border border-gray-300 rounded-md text-sm' required/>
+                                    <input type="text" placeholder='Your Name' className='p-2 py-1 border border-gray-300 rounded-md text-sm' required />
+                                    <input type="Email" placeholder='Your Email' className='p-2 py-1 border border-gray-300 rounded-md text-sm' required />
+                                    <textarea rows={4} placeholder='Your Message' className='p-2 py-1 border border-gray-300 rounded-md text-sm' required />
                                     <button type='submit' className='btn-secondary rounded-lg py-1.5'>Send Message</button>
                                 </form>
                                 <h4 className="h4 mb-3 mt-8">For Buying Contact</h4>
-                                    <div className="text-sm w-80 divide-y divide-gray-500/30 border  border-gray-500/30 rounded">
-                                        <div className="flex items-start justify-between p-3">
-                                            <div className="">
-                                                <div className="flex items-center space-x-2">
-                                                    <h5 className='h5'>{property.agency.name}</h5>
-                                                    <p className='bg-green-500/20 px-2 py-0.5 rounded-full text-green-600 border border-green-500/30'>Agency</p>
-                                                </div>
-                                                <p>Agency Office</p>
+                                <div className="text-sm w-80 divide-y divide-gray-500/30 border  border-gray-500/30 rounded">
+                                    <div className="flex items-start justify-between p-3">
+                                        <div className="">
+                                            <div className="flex items-center space-x-2">
+                                                <h5 className='h5'>{property.agency.name}</h5>
+                                                <p className='bg-green-500/20 px-2 py-0.5 rounded-full text-green-600 border border-green-500/30'>Agency</p>
                                             </div>
-                                            <img className='h-10 w-10 rounded-full' src={property.agency.owner.image} alt="" />
+                                            <p>Agency Office</p>
                                         </div>
-                                        <div className="flexStart gap-2 p-1.5">
-                                            <div className="bg-green-500/20 p-1 rounded-full border border-green-500/30">
-                                            <img src={assets.phone} alt=""width={14} />
-                                            </div>
-                                            <p>{property.agency.contact}</p>
-                                        </div>
-                                        <div className="flexStart gap-2 p-1.5">
-                                            <div className="bg-green-500/20 p-1 rounded-full border border-green-500/30">
-                                            <img src={assets.mail} alt="" width={14} />
-                                            </div>
-                                            <p>{property.agency.email}</p>
-                                        </div>
-                                        <div className="flex items-center divide-x divide-gray-500/30">
-                                            <button className='flex flex-center justify-center gap-2 w-1/2 py-3 cursor-pointer'>
-                                                <img src={assets.mail} width={19} alt="" />
-                                                Send Email
-                                            </button>
-                                            <button className='flex flex-center justify-center gap-2 w-1/2 py-3 cursor-pointer'>
-                                                <img src={assets.phone} width={19} alt="" />
-                                                Call Now
-                                            </button>
-                                        </div>
+                                        <img className='h-10 w-10 rounded-full' src={property.agency.owner.image} alt="" />
                                     </div>
+                                    <div className="flexStart gap-2 p-1.5">
+                                        <div className="bg-green-500/20 p-1 rounded-full border border-green-500/30">
+                                            <img src={assets.phone} alt="" width={14} />
+                                        </div>
+                                        <p>{property.agency.contact}</p>
+                                    </div>
+                                    <div className="flexStart gap-2 p-1.5">
+                                        <div className="bg-green-500/20 p-1 rounded-full border border-green-500/30">
+                                            <img src={assets.mail} alt="" width={14} />
+                                        </div>
+                                        <p>{property.agency.email}</p>
+                                    </div>
+                                    <div className="flex items-center divide-x divide-gray-500/30">
+                                        <button className='flex flex-center justify-center gap-2 w-1/2 py-3 cursor-pointer'>
+                                            <img src={assets.mail} width={19} alt="" />
+                                            Send Email
+                                        </button>
+                                        <button className='flex flex-center justify-center gap-2 w-1/2 py-3 cursor-pointer'>
+                                            <img src={assets.phone} width={19} alt="" />
+                                            Call Now
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

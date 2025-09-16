@@ -1,7 +1,24 @@
-import React from 'react'
-import { assets, cities } from '../assets/data'
+import React, { useState } from 'react'
+import { assets } from '../assets/data'
+import { useAppContext } from '../context/AppContext'
 
 const Hero = () => {
+  const {navigate,getToken,axios,searchedCities,setSearchedCities}=useAppContext()
+  const [destination,setDestination]=useState("")
+  const onSearch = async(e)=>{
+    e.preventDefault()
+    navigate(`/listing?destination=${destination}`)
+    await axios.post('api/user/store-recent-search',{recentSearchedCity:destination},{headers:{Authorization:`Bearer ${await getToken()}`}})
+
+    // add destination to searched city
+    setSearchedCities((prevSearchedCities)=>{
+      const updatedSearchedCities = [...prevSearchedCities,destination]
+      if(updatedSearchedCities.length > 3){
+        updatedSearchedCities.shift()
+      }
+      return updatedSearchedCities
+    })
+  }
   return (
     <section className='h-screen w-screen bg-[url(/src/assets/bg.png)] bg-cover bg-center bg-no-repeat'>
       <div className="max-padd-container h-screen w-screen">
@@ -26,9 +43,9 @@ const Hero = () => {
               <img src={assets.pin} width={20} alt="" />
               <label htmlFor="destinationInput">Destination</label>
             </div>
-            <input list='destinations' id='destinationInput' type="text" className='rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' placeholder='Type here...' required />
+            <input onChange={(e)=>setDestination(e.target.value)} value={destination} list='destinations' id='destinationInput' type="text" className='rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' placeholder='Type here...' required />
             <datalist id='destinations'>
-              {cities.map((city,index)=>(
+              {searchedCities.map((city,index)=>(
                 <option value={city} key={index}/>
               ))}
             </datalist>
@@ -54,7 +71,7 @@ const Hero = () => {
             </div>
             <input min={1} max={4}  type="number" id='guests' className='rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none' placeholder='0' />
           </div>
-          <button type='submit' className='flex items-center gap-1 justify-center rounded-md bg-black py-3 px-6 text-white my-auto cursor-pointer max-md:w-full max-md:py-1'>
+          <button onSubmit={onSearch} type='submit' className='flex items-center gap-1 justify-center rounded-md bg-black py-3 px-6 text-white my-auto cursor-pointer max-md:w-full max-md:py-1'>
             <img src={assets.search} width={20} className='invert' alt="" />
             <span>Search</span>
           </button>

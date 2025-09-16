@@ -3,21 +3,32 @@ import { useAppContext } from '../context/AppContext'
 import { assets, dummyBookingsData } from '../assets/data'
 
 const MyBookings = () => {
-  const [bookings,setBookings]= useState([])
-  const {currency,user}=useAppContext()
+  const [bookings, setBookings] = useState([])
+  const { currency, user, axios, getToken, toast } = useAppContext()
 
-  const getUserBooking=()=>{
-    setBookings(dummyBookingsData)
+  const getUserBooking = async () => {
+    try {
+      const { data } = await axios.get('/api/bookings/user', { headers: { Authorization: `Bearer ${await getToken()}` } })
+      if (data.success) {
+        setBookings(data.bookings)
+      }else{
+        toast.error(data.message)
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message)
+
+    }
   }
-  useEffect(()=>{
-    if(user){
+  useEffect(() => {
+    if (user) {
       getUserBooking()
     }
-  },[user])
+  }, [user])
   return (
     <div className='max-padd-container bg-gredient-to-r from-[#fffbee] to-white py-16 pt-28'>
       {
-        bookings?.map((booking)=>(
+        bookings?.map((booking) => (
           <div className="bg-white ring-1 ring-slate-900/5 p-2 pr-4 mt-3 rounded-lg" key={booking._id}>
             {/* property list */}
             <div className="flexStart gap-3 mb-3">
@@ -32,7 +43,7 @@ const MyBookings = () => {
                     <p>{booking.guests}</p>
                   </div>
                   <div className="flex items-center gap-x-2">
-                    <h5 className="medium-14">Guests:</h5>
+                    <h5 className="medium-14">TotalAmount:</h5>
                     <p className='text-gray-400 text-sm'>{currency}{booking.totalPrice}</p>
                   </div>
                 </div>
@@ -62,8 +73,8 @@ const MyBookings = () => {
                 <div className="flex items-center gap-x-3">
                   <h5 className="medium-14">Payment:</h5>
                   <div className="flex items-center gap-1">
-                    <span className={`min-w-2.5 h-2.5 rounded-full ${booking.isPaid ? "bg-green-500":"bg-yellow-500"}`}/>
-                    <p className='text-gray-400 text-xs'>{booking.isPaid ? "Paid":"Pending"}</p>
+                    <span className={`min-w-2.5 h-2.5 rounded-full ${booking.isPaid ? "bg-green-500" : "bg-yellow-500"}`} />
+                    <p className='text-gray-400 text-xs'>{booking.isPaid ? "Paid" : "Pending"}</p>
                   </div>
                 </div>
                 {

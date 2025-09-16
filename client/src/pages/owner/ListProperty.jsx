@@ -1,12 +1,31 @@
 import React, { useEffect,useState } from 'react'
 import { useAppContext } from '../../context/AppContext'
-import { dummyProperties } from '../../assets/data'
+// import { dummyProperties } from '../../assets/data'
 
 const ListProperty = () => {
-    const { user, currency } = useAppContext()
+    const {axios,getToken,toast, user, currency } = useAppContext()
     const [properties, setProperties] = useState([])
     const getProperties = async () => {
-        setProperties(dummyProperties)
+        try {
+            const {data}=await axios.get("/api/properties/owner", { headers: { Authorization: `Bearer ${await getToken()}` } })
+            if(data.success){
+                setProperties(data.properties)
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+            
+        }
+    }
+    const toggleAvailability = async(propertyId)=>{
+        const {data}=await axios.post("/api/properties/toggle-availability",{propertyId}, { headers: { Authorization: `Bearer ${await getToken()}` } })
+            if(data.success){
+                toast.success(data.properties)
+                getProperties()
+            }else{
+                toast.error(data.message)
+            }
     }
     useEffect(() => {
         if (user) {
@@ -39,7 +58,7 @@ const ListProperty = () => {
                                 <div className="">{currency}{property.price.sale}</div>
                                 <div className="">
                                     <label className='relative inline-flex items-center cursor-pointer text-gray-900 gap-3'>
-                                        <input type="checkbox" className='sr-only peer' defaultChecked={property.isAvailable} />
+                                        <input onChange={()=>toggleAvailability(property._id)} type="checkbox" className='sr-only peer' defaultChecked={property.isAvailable} />
                                     <div className='w-10 h-6 bg-slate-300 rounded-full peer peer-checked:bg-secondary transition-colors duration-200' />
                                     <span className='absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-4' />
                                     </label>
