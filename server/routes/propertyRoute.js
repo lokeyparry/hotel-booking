@@ -6,7 +6,7 @@ import { createNewProperty, getAllAvailableProperties, getOwnerProperties, toggl
 
 const propertyRouter = express.Router()
 
-propertyRouter.post('/', upload.array("images", 4), authUser, createNewProperty)
+// propertyRouter.post('/create', upload.array("images", 4), authUser, createNewProperty)
 propertyRouter.get('/', getAllAvailableProperties)
 propertyRouter.get('/owner', getOwnerProperties)
 propertyRouter.post('/toggle-availability', authUser, togglePropertyAvailability)

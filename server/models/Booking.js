@@ -1,7 +1,10 @@
 import mongoose from "mongoose"
 
 const bookingSchema = mongoose.Schema({
-    user: { type: String, required: true },
+    user: {
+        type: String,
+        required: true
+    },
     property: { type: String, ref: "Property", required: true },
     agency: { type: String, ref: "Agency", required: true },
     checkInDate: { type: Date, required: true },
