@@ -9,6 +9,7 @@ import agencyRouter from "./routes/agencyRoute.js"
 import propertyRouter from "./routes/propertyRoute.js"
 import bookingRouter from "./routes/bookingRoute.js"
 import connectCloudinary from "./config/cloudinary.js"
+import { stripeWebhooks } from "./controller/stripeWebhooks.js"
 
 const app = express()
 
@@ -16,6 +17,7 @@ connectDB()
 connectCloudinary()
 app.use(cors())
 app.use(express.json())
+app.post('/api/stripe', express.raw({ type: "application/json" }), stripeWebhooks)
 
 const port = process.env.PORT || 4000
 

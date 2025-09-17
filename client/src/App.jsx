@@ -15,6 +15,7 @@ import AddProperty from './pages/owner/AddProperty'
 import ListProperty from './pages/owner/ListProperty'
 import Sidebar from './components/owner/Sidebar'
 import {Toaster} from "react-hot-toast"
+import Processing from './pages/owner/Processing'
 
 
 const App = () => {
@@ -33,6 +34,7 @@ const App = () => {
         <Route path="/blog" element={<Blog/>} />
         <Route path="/contact" element={<Contact/>} />
         <Route path="/my-bookings" element={<MyBookings/>} />
+        <Route path="/processing/:nextUrl" element={<Processing/>} />
         <Route path='/owner' element={<Sidebar />}>
           <Route index element={<Dashboard />} />
           <Route path='/owner/add-property' element={<AddProperty />} />

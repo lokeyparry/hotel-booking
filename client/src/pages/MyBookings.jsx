@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
-import { assets, dummyBookingsData } from '../assets/data'
+import { assets } from '../assets/data'
 
 const MyBookings = () => {
   const [bookings, setBookings] = useState([])
@@ -18,6 +18,18 @@ const MyBookings = () => {
       console.log(error)
       toast.error(error.message)
 
+    }
+  }
+  const handlePayment = async(bookingId)=>{
+    try {
+      const { data } = await axios.post('/api/bookings/stripe',{bookingId}, { headers: { Authorization: `Bearer ${await getToken()}` } })
+      if(data.success){
+        window.location.href=data.url
+      }else{
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
     }
   }
   useEffect(() => {
@@ -79,7 +91,7 @@ const MyBookings = () => {
                 </div>
                 {
                   !booking.isPaid && (
-                    <button className='btn-secondary !py-1 !text-xs rounded-sm'>Pay Now</button>
+                    <button onClick={()=>handlePayment(booking._id)} className='btn-secondary !py-1 !text-xs rounded-sm'>Pay Now</button>
                   )
                 }
               </div>

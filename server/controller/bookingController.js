@@ -2,6 +2,7 @@ import transporter from "../config/nodemailer.js"
 import Agency from "../models/Agency.js"
 import Booking from "../models/Booking.js"
 import Property from "../models/Property.js"
+import stripe from "stripe"
 
 
 const checkAvailability = async({ checkInDate, checkOutDate, property }) => {
@@ -113,5 +114,37 @@ export const getAgencyBookings = async(req, res) => {
         res.json({ success: true, dashboardData: { totalBookings, totalRevenue, bookings } })
     } catch (error) {
         res.json({ success: true, message: "Failed to get bookings" })
+    }
+}
+
+// Stripe payment POST/STRIPE
+
+export const bookingsStripePayment = async(req, res) => {
+    try {
+        const { bookingId } = req.body
+        const booking = await Property.findbyId(bookingId)
+        const propertyData = await Property.findById(booking.property).populate("agency")
+        const totalPrice = booking.toatalPrice
+        const { origin } = req.headers
+
+        const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
+        const line_items = [{
+            price_data: {
+                currency: "usd",
+                product_data: { name: propertyData.agency.name },
+                unit_amount: totalPrice * 100
+            },
+            quantity: 1,
+        }]
+        const session = await stripeInstance.checkout.sessions.create({
+            line_items,
+            mode: "payment",
+            success_url: `${origin}/processing/my-bookings`,
+            cancel_url: `${origin}/my-bookings`,
+            metadata: { bookingId }
+        })
+        res.json({ success: true, url: session.url })
+    } catch (error) {
+        res.json({ success: false, message: "Payment failed" })
     }
 }
