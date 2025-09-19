@@ -9,6 +9,6 @@ bookingRouter.post("/check-availability", checkBookingAvailabilty)
 bookingRouter.post("/book", authUser, bookingCreate)
 bookingRouter.get("/user", authUser, getUserBookings)
 bookingRouter.get("/agency", authUser, getAgencyBookings)
-bookingRouter.get("/stripe", authUser, bookingsStripePayment)
+bookingRouter.post("/stripe", authUser, bookingsStripePayment)
 
 export default bookingRouter

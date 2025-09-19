@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/data'
+import toast from 'react-hot-toast'
 
 const MyBookings = () => {
   const [bookings, setBookings] = useState([])
-  const { currency, user, axios, getToken, toast } = useAppContext()
+  const { currency, user, axios, getToken,} = useAppContext()
 
   const getUserBooking = async () => {
     try {
